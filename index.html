@@ -1,44 +1,68 @@
-<!DOCTYPE html><html lang="vi"><head>
-    <title>Mô Phỏng Trạm Thu Phí ETC - UTC</title>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Hệ Thống Thu Phí ETC - UTC</title>
     <meta charset="utf-8">
     <style>
         :root { --main: #00558d; --success: #27ae60; --error: #e74c3c; }
         body { font-family: 'Segoe UI', Arial; background: #eceff1; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .road { width: 100%; max-width: 800px; height: 150px; background: #333; position: relative; overflow: hidden; border-top: 4px dashed #fff; border-bottom: 4px dashed #fff; margin-bottom: 20px; border-radius: 10px; }
-        .barie { position: absolute; right: 150px; bottom: 0; width: 15px; height: 100px; background: #f39c12; transform-origin: bottom; transition: 0.5s; z-index: 10; border: 2px solid #000; }
+        
+        /* Khu vực đường chạy */
+        .road { width: 100%; max-width: 800px; height: 160px; background: #333; position: relative; overflow: hidden; border-top: 4px dashed #fff; border-bottom: 4px dashed #fff; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .barie { position: absolute; right: 180px; bottom: 0; width: 12px; height: 100px; background: #f39c12; transform-origin: bottom; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); z-index: 10; border: 2px solid #000; }
         .barie.up { transform: rotate(90deg); }
-        .car { position: absolute; left: -100px; bottom: 20px; font-size: 50px; transition: 1s; z-index: 5; }
-        .panel { background: white; width: 100%; max-width: 600px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
-        input { padding: 12px; width: 60%; font-size: 20px; border-radius: 8px; border: 2px solid #ddd; text-align: center; font-weight: bold; }
-        button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 5px; color: white; }
-        #result { margin-top: 15px; padding: 15px; border-radius: 8px; font-weight: bold; min-height: 40px; }
-        .open { background: #d4edda; color: #155724; }
-        .stop { background: #f8d7da; color: #721c24; }
-        table { width: 100%; max-width: 600px; margin-top: 20px; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        .car { position: absolute; left: -100px; bottom: 25px; font-size: 55px; transition: 1.2s ease-in-out; z-index: 5; }
+        .lane-label { position: absolute; right: 160px; top: 20px; color: #ffeb3b; border: 2px solid #ffeb3b; padding: 4px 10px; font-weight: bold; letter-spacing: 2px; }
+
+        /* Bảng điều khiển */
+        .panel { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
+        input { padding: 15px; width: 70%; font-size: 22px; border-radius: 10px; border: 2px solid #ddd; text-align: center; font-weight: bold; color: #333; margin-bottom: 20px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--main); box-shadow: 0 0 10px rgba(0,85,141,0.2); }
+        
+        .btn-group { display: flex; gap: 15px; justify-content: center; }
+        button { padding: 15px 25px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 16px; text-transform: uppercase; }
+        .btn-manual { background: var(--main); }
+        .btn-manual:hover { background: #003d66; transform: translateY(-2px); }
+        .btn-auto { background: #8e44ad; }
+        .btn-auto.on { background: var(--success); }
+
+        #result { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; min-height: 25px; font-size: 18px; transition: 0.3s; }
+        .open { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .stop { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        /* Lịch sử */
+        table { width: 100%; max-width: 650px; margin-top: 25px; background: white; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        th { background: #f8f9fa; padding: 12px; color: #666; font-size: 14px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 15px; }
     </style>
-</head><body>
-    <h1 style="color: var(--main);">HỆ THỐNG MÔ PHỎNG ITS - UTC</h1>
+</head>
+<body>
+
+    <h1 style="color: var(--main); margin-bottom: 10px;">HỆ THỐNG MÔ PHỎNG ITS - UTC</h1>
+    <p style="color: #666; margin-top: 0;">Sinh viên thực hiện: Phạm Minh Dương</p>
+
     <div class="road">
         <div id="barieArm" class="barie"></div>
         <div id="carIcon" class="car">🚗</div>
-        <div style="position: absolute; right: 140px; top: 20px; color: white; border: 2px solid red; padding: 5px;">LÀN ETC</div>
+        <div class="lane-label">LÀN THU PHÍ ETC</div>
     </div>
+
     <div class="panel">
-        <input type="text" id="bienSo" value="29A-11111">
-        <div>
-            <button style="background: var(--main)" onclick="runProcess()">QUÉT THỦ CÔNG</button>
-            <button id="btnAuto" style="background: #8e44ad" onclick="toggleAuto()">TỰ ĐỘNG: OFF</button>
+        <input type="text" id="bienSo" value="29A-11111" placeholder="Nhập biển số...">
+        <div class="btn-group">
+            <button class="btn-manual" onclick="runProcess()">Quét Thủ Công</button>
+            <button id="btnAuto" class="btn-auto" onclick="toggleAuto()">Tự Động: OFF</button>
         </div>
-        <div id="result">Nhập biển số để kiểm tra</div>
+        <div id="result">Vui lòng nhập biển số hoặc bật chế độ Tự động</div>
     </div>
+
     <table>
-        <thead><tr><th>Biển Số</th><th>Thời Gian</th><th>Kết Quả</th></tr></thead>
+        <thead><tr><th>Biển Số</th><th>Chủ Xe</th><th>Thời Gian</th><th>Kết Quả</th></tr></thead>
         <tbody id="historyBody"></tbody>
     </table>
 
     <script>
-        // Data 20 xe của Dương đây nhé
+        // Dữ liệu 20 xe từ SQL của Dương
         const dbXe = {
             '29A-11111': {ten: 'Dương đẹp trai UTC', du: 500000}, '30F-88888': {ten: 'Tuấn Đại Gia', du: 2000000},
             '51G-67890': {ten: 'Xuân ITS', du: 400000}, '15A-55555': {ten: 'Hải Phòng là nhà', du: 900000},
@@ -47,57 +71,80 @@
             '98A-66666': {ten: 'Bắc Giang vải thiều', du: 100000}, '37A-99999': {ten: 'Nghệ An cá gỗ', du: 600000},
             '19B-22222': {ten: 'Phú Thọ Đất Tổ', du: 850000}, '20A-11223': {ten: 'Thái Nguyên trà xanh', du: 450000},
             '34B-44556': {ten: 'Hải Dương bánh đậu', du: 300000}, '18A-99887': {ten: 'Nam Định phở bò', du: 700000},
-            '21A-00001': {ten: 'Yên Bái mây ngàn', du: 120000},
-            '34A-22222': {ten: 'Hùng xe ôm nghèo', du: 15000}, '17B-33333': {ten: 'Cường chạy Grab', du: 5000},
-            '99C-88888': {ten: 'Bác lái xe tải hết tiền', du: 20000}, '29H-44444': {ten: 'Shipper vượt khó', du: 12000},
-            '30A-00000': {ten: 'Xe sinh viên thực tập', du: 2000}
+            '21A-00001': {ten: 'Yên Bái mây ngàn', du: 120000}, '34A-22222': {ten: 'Hùng xe ôm nghèo', du: 15000},
+            '17B-33333': {ten: 'Cường chạy Grab', du: 5000}, '99C-88888': {ten: 'Bác lái xe tải hết tiền', du: 20000},
+            '29H-44444': {ten: 'Shipper vượt khó', du: 12000}, '30A-00000': {ten: 'Xe sinh viên thực tập', du: 2000}
         };
 
         let isAuto = false, autoInterval;
 
         async function runProcess() {
-            const bs = document.getElementById('bienSo').value.trim();
+            const bsInput = document.getElementById('bienSo');
+            const bs = bsInput.value.trim();
             const car = document.getElementById('carIcon'), barie = document.getElementById('barieArm'), resDiv = document.getElementById('result');
             
-            car.style.left = "450px";
-            resDiv.innerHTML = "🔍 Đang check biển số..."; resDiv.className = "";
+            // 1. Xe đi tới trạm
+            car.style.left = "420px";
+            resDiv.innerHTML = "🔍 Đang nhận diện biển số..."; resDiv.className = "";
             await new Promise(r => setTimeout(r, 800));
 
             const xe = dbXe[bs];
-            if (xe && xe.du >= 25000) { // Giả sử phí là 25k
+            // Phí mặc định là 25.000đ
+            if (xe && xe.du >= 25000) {
+                // THÀNH CÔNG
                 barie.classList.add('up');
                 resDiv.className = "open";
                 resDiv.innerHTML = `✅ MỜI QUA: ${xe.ten} (-25.000đ)`;
-                setTimeout(() => { car.style.left = "900px"; }, 500);
-                updateHistory(bs, "Thành công");
+                
+                await new Promise(r => setTimeout(r, 600));
+                car.style.left = "900px"; // Xe đi qua trạm
+                updateHistory(bs, xe.ten, "Thành công");
             } else {
+                // THẤT BẠI
                 resDiv.className = "stop";
                 resDiv.innerHTML = xe ? `❌ HẾT TIỀN: ${xe.ten}` : "❌ XE CHƯA ĐĂNG KÝ ETC";
-                setTimeout(() => { car.style.left = "-100px"; }, 500);
-                updateHistory(bs, "Bị chặn");
+                
+                await new Promise(r => setTimeout(r, 600));
+                car.style.left = "-150px"; // Xe lùi lại
+                updateHistory(bs, xe ? xe.ten : "Không xác định", "Bị chặn");
             }
 
-            setTimeout(() => { barie.classList.remove('up'); if (car.style.left === "900px") car.style.left = "-100px"; }, 2500);
+            // Reset barie và vị trí xe cho lượt sau
+            setTimeout(() => {
+                barie.classList.remove('up');
+                if (car.style.left === "900px" || car.style.left === "-150px") {
+                    car.style.transition = "0s";
+                    car.style.left = "-100px";
+                    setTimeout(() => { car.style.transition = "1.2s ease-in-out"; }, 50);
+                }
+            }, 2500);
         }
 
         function toggleAuto() {
             isAuto = !isAuto;
             const btn = document.getElementById('btnAuto');
-            btn.innerHTML = isAuto ? "TỰ ĐỘNG: ON" : "TỰ ĐỘNG: OFF";
-            btn.style.background = isAuto ? "#27ae60" : "#8e44ad";
-            if (isAuto) autoInterval = setInterval(() => {
-                const keys = Object.keys(dbXe);
-                document.getElementById('bienSo').value = keys[Math.floor(Math.random() * keys.length)];
-                runProcess();
-            }, 5000);
-            else clearInterval(autoInterval);
+            if (isAuto) {
+                btn.innerHTML = "Tự Động: ON";
+                btn.classList.add('on');
+                autoInterval = setInterval(() => {
+                    const keys = Object.keys(dbXe);
+                    document.getElementById('bienSo').value = keys[Math.floor(Math.random() * keys.length)];
+                    runProcess();
+                }, 5500); // Khoảng cách giữa các lượt xe
+            } else {
+                btn.innerHTML = "Tự Động: OFF";
+                btn.classList.remove('on');
+                clearInterval(autoInterval);
+            }
         }
 
-        function updateHistory(bs, status) {
+        function updateHistory(bs, chuXe, status) {
             const body = document.getElementById('historyBody');
             const row = body.insertRow(0);
-            row.innerHTML = `<td><b>${bs}</b></td><td>${new Date().toLocaleTimeString()}</td><td>${status}</td>`;
-            if (body.rows.length > 5) body.deleteRow(5);
+            row.style.background = status === "Thành công" ? "#f0fff4" : "#fff5f5";
+            row.innerHTML = `<td><b>${bs}</b></td><td>${chuXe}</td><td>${new Date().toLocaleTimeString()}</td><td>${status}</td>`;
+            if (body.rows.length > 6) body.deleteRow(6);
         }
     </script>
-</body></html>
+</body>
+</html>
