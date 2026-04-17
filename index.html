@@ -4,76 +4,91 @@
     <title>Hệ Thống Thu Phí ETC - UTC</title>
     <meta charset="utf-8">
     <style>
-        :root { --main: #00558d; --success: #27ae60; --error: #e74c3c; }
+        :root { --main: #00558d; --success: #27ae60; --error: #e74c3c; --bg-success: #d4edda; --bg-error: #f8d7da; }
         body { font-family: 'Segoe UI', Arial; background: #eceff1; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         
-        /* Khu vực đường chạy */
-        .road { width: 100%; max-width: 800px; height: 160px; background: #333; position: relative; overflow: hidden; border-top: 4px dashed #fff; border-bottom: 4px dashed #fff; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-        .barie { position: absolute; right: 180px; bottom: 0; width: 12px; height: 100px; background: #f39c12; transform-origin: bottom; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); z-index: 10; border: 2px solid #000; }
+        .road { width: 100%; max-width: 800px; height: 180px; background: #333; position: relative; overflow: hidden; border-top: 4px dashed #fff; border-bottom: 4px dashed #fff; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .barie { position: absolute; right: 180px; bottom: 0; width: 12px; height: 120px; background: #f39c12; transform-origin: bottom; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); z-index: 10; border: 2px solid #000; }
         .barie.up { transform: rotate(90deg); }
-        .car { position: absolute; left: -100px; bottom: 25px; font-size: 55px; transition: 1.2s ease-in-out; z-index: 5; }
+        
+        .car-container { position: absolute; left: -150px; bottom: 25px; transition: 1.2s ease-in-out; z-index: 5; display: flex; flex-direction: column; align-items: center; width: 120px; }
+        .car { font-size: 60px; margin-top: -10px; }
+        
+        .car-info { background: white; border: 2px solid #333; border-radius: 8px; padding: 5px; width: 120px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2); opacity: 0; transition: 0.3s; margin-bottom: 5px; }
+        .car-info.show { opacity: 1; }
+        .info-line { font-weight: bold; font-size: 12px; color: #333; margin: 2px 0; }
         .lane-label { position: absolute; right: 160px; top: 20px; color: #ffeb3b; border: 2px solid #ffeb3b; padding: 4px 10px; font-weight: bold; letter-spacing: 2px; }
 
-        /* Bảng điều khiển */
         .panel { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
-        input { padding: 15px; width: 70%; font-size: 22px; border-radius: 10px; border: 2px solid #ddd; text-align: center; font-weight: bold; color: #333; margin-bottom: 20px; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--main); box-shadow: 0 0 10px rgba(0,85,141,0.2); }
+        input { padding: 12px; width: 80%; font-size: 20px; border-radius: 8px; border: 1px solid #ccc; text-align: center; font-weight: bold; margin-bottom: 15px; outline: none; }
         
-        .btn-group { display: flex; gap: 15px; justify-content: center; }
-        button { padding: 15px 25px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 16px; text-transform: uppercase; }
-        .btn-manual { background: var(--main); }
-        .btn-manual:hover { background: #003d66; transform: translateY(-2px); }
-        .btn-auto { background: #8e44ad; }
+        .btn-manual { background: var(--main); color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        .btn-auto { background: #8e44ad; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-auto.on { background: var(--success); }
 
-        #result { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; min-height: 25px; font-size: 18px; transition: 0.3s; }
-        .open { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .stop { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; min-height: 35px; display: flex; align-items: center; justify-content: center; transition: 0.3s; gap: 10px; }
+        .open { background: var(--bg-success); color: #155724; border: 1px solid #c3e6cb; }
+        .stop { background: var(--bg-error); color: #721c24; border: 1px solid #f5c6cb; }
 
-        /* Lịch sử */
-        table { width: 100%; max-width: 650px; margin-top: 25px; background: white; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        th { background: #f8f9fa; padding: 12px; color: #666; font-size: 14px; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 15px; }
+        table { width: 100%; max-width: 750px; margin-top: 25px; background: white; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        th { background: #f8f9fa; padding: 12px; color: #333; }
+        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h1 style="color: var(--main); margin-bottom: 10px;">HỆ THỐNG MÔ PHỎNG ITS - UTC</h1>
-    <p style="color: #666; margin-top: 0;">Sinh viên thực hiện: Phạm Minh Dương</p>
+    <h1 style="color: var(--main); margin-bottom: 30px;">HỆ THỐNG MÔ PHỎNG ITS - UTC</h1>
 
     <div class="road">
         <div id="barieArm" class="barie"></div>
-        <div id="carIcon" class="car">🚗</div>
+        <div id="carContainer" class="car-container">
+            <div id="carInfoBox" class="car-info">
+                <div id="infoBienSo" class="info-line"></div>
+                <div id="infoChuXe" class="info-line"></div>
+                <div id="infoLoaiXe" class="info-line"></div>
+            </div>
+            <div class="car">🚗</div>
+        </div>
         <div class="lane-label">LÀN THU PHÍ ETC</div>
     </div>
 
     <div class="panel">
-        <input type="text" id="bienSo" value="29A-11111" placeholder="Nhập biển số...">
-        <div class="btn-group">
-            <button class="btn-manual" onclick="runProcess()">Quét Thủ Công</button>
-            <button id="btnAuto" class="btn-auto" onclick="toggleAuto()">Tự Động: OFF</button>
+        <input type="text" id="bienSo" value="29A-11111">
+        <div style="margin-bottom: 10px;">
+            <button class="btn-manual" onclick="runProcess()">QUÉT THỦ CÔNG</button>
+            <button id="btnAuto" class="btn-auto" onclick="toggleAuto()">CHẾ ĐỘ TỰ ĐỘNG: OFF</button>
         </div>
-        <div id="result">Vui lòng nhập biển số hoặc bật chế độ Tự động</div>
+        <div id="result">Vui lòng quét biển số</div>
     </div>
 
     <table>
-        <thead><tr><th>Biển Số</th><th>Chủ Xe</th><th>Thời Gian</th><th>Kết Quả</th></tr></thead>
+        <thead><tr><th>Biển Số</th><th>Chủ Xe</th><th>Loại Xe</th><th>Thời Gian</th><th>Kết Quả</th></tr></thead>
         <tbody id="historyBody"></tbody>
     </table>
 
     <script>
-        // Dữ liệu 20 xe từ SQL của Dương
+        // CẬP NHẬT ĐỦ 20 XE TỪ SQL CỦA DƯƠNG
         const dbXe = {
-            '29A-11111': {ten: 'Dương đẹp trai UTC', du: 500000}, '30F-88888': {ten: 'Tuấn Đại Gia', du: 2000000},
-            '51G-67890': {ten: 'Xuân ITS', du: 400000}, '15A-55555': {ten: 'Hải Phòng là nhà', du: 900000},
-            '43B-12345': {ten: 'Đà Nẵng vẫy gọi', du: 1500000}, '36A-33333': {ten: 'Thanh Hóa choa', du: 300000},
-            '14C-44444': {ten: 'Quảng Ninh Than', du: 2500000}, '17A-77777': {ten: 'Thái Bình mồ hôi rơi', du: 200000},
-            '98A-66666': {ten: 'Bắc Giang vải thiều', du: 100000}, '37A-99999': {ten: 'Nghệ An cá gỗ', du: 600000},
-            '19B-22222': {ten: 'Phú Thọ Đất Tổ', du: 850000}, '20A-11223': {ten: 'Thái Nguyên trà xanh', du: 450000},
-            '34B-44556': {ten: 'Hải Dương bánh đậu', du: 300000}, '18A-99887': {ten: 'Nam Định phở bò', du: 700000},
-            '21A-00001': {ten: 'Yên Bái mây ngàn', du: 120000}, '34A-22222': {ten: 'Hùng xe ôm nghèo', du: 15000},
-            '17B-33333': {ten: 'Cường chạy Grab', du: 5000}, '99C-88888': {ten: 'Bác lái xe tải hết tiền', du: 20000},
-            '29H-44444': {ten: 'Shipper vượt khó', du: 12000}, '30A-00000': {ten: 'Xe sinh viên thực tập', du: 2000}
+            '29A-11111': {ten: 'Dương đẹp trai UTC', du: 500000, loai: 'Xe con'},
+            '30F-88888': {ten: 'Tuấn Đại Gia', du: 2000000, loai: 'Xe con'},
+            '51G-67890': {ten: 'Xuân ITS', du: 400000, loai: 'Xe con'},
+            '15A-55555': {ten: 'Hải Phòng là nhà', du: 900000, loai: 'Xe con'},
+            '43B-12345': {ten: 'Đà Nẵng vẫy gọi', du: 1500000, loai: 'Xe khách'},
+            '36A-33333': {ten: 'Thanh Hóa choa', du: 300000, loai: 'Xe con'},
+            '14C-44444': {ten: 'Quảng Ninh Than', du: 2500000, loai: 'Xe tải'},
+            '17A-77777': {ten: 'Thái Bình mồ hôi rơi', du: 200000, loai: 'Xe con'},
+            '98A-66666': {ten: 'Bắc Giang vải thiều', du: 100000, loai: 'Xe con'},
+            '37A-99999': {ten: 'Nghệ An cá gỗ', du: 600000, loai: 'Xe con'},
+            '19B-22222': {ten: 'Phú Thọ Đất Tổ', du: 850000, loai: 'Xe con'},
+            '20A-11223': {ten: 'Thái Nguyên trà xanh', du: 450000, loai: 'Xe con'},
+            '34B-44556': {ten: 'Hải Dương bánh đậu', du: 300000, loai: 'Xe con'},
+            '18A-99887': {ten: 'Nam Định phở bò', du: 700000, loai: 'Xe con'},
+            '21A-00001': {ten: 'Yên Bái mây ngàn', du: 120000, loai: 'Xe con'},
+            '34A-22222': {ten: 'Hùng xe ôm nghèo', du: 15000, loai: 'Xe con'},
+            '17B-33333': {ten: 'Cường chạy Grab', du: 5000, loai: 'Xe con'},
+            '99C-88888': {ten: 'Bác lái xe tải hết tiền', du: 20000, loai: 'Xe tải'},
+            '29H-44444': {ten: 'Shipper vượt khó', du: 12000, loai: 'Xe con'},
+            '30A-00000': {ten: 'Xe sinh viên thực tập', du: 2000, loai: 'Xe con'}
         };
 
         let isAuto = false, autoInterval;
@@ -81,41 +96,49 @@
         async function runProcess() {
             const bsInput = document.getElementById('bienSo');
             const bs = bsInput.value.trim();
-            const car = document.getElementById('carIcon'), barie = document.getElementById('barieArm'), resDiv = document.getElementById('result');
+            const carCont = document.getElementById('carContainer'), carInfo = document.getElementById('carInfoBox'), barie = document.getElementById('barieArm'), resDiv = document.getElementById('result');
             
-            // 1. Xe đi tới trạm
-            car.style.left = "420px";
-            resDiv.innerHTML = "🔍 Đang nhận diện biển số..."; resDiv.className = "";
-            await new Promise(r => setTimeout(r, 800));
-
             const xe = dbXe[bs];
-            // Phí mặc định là 25.000đ
-            if (xe && xe.du >= 25000) {
-                // THÀNH CÔNG
-                barie.classList.add('up');
-                resDiv.className = "open";
-                resDiv.innerHTML = `✅ MỜI QUA: ${xe.ten} (-25.000đ)`;
-                
-                await new Promise(r => setTimeout(r, 600));
-                car.style.left = "900px"; // Xe đi qua trạm
-                updateHistory(bs, xe.ten, "Thành công");
+            document.getElementById('infoBienSo').innerHTML = bs;
+            document.getElementById('infoChuXe').innerHTML = xe ? xe.ten : "N/A";
+            document.getElementById('infoLoaiXe').innerHTML = xe ? xe.loai : "N/A";
+
+            carCont.style.transition = "1.2s ease-in-out";
+            carCont.style.left = "420px";
+            resDiv.innerHTML = "Đang nhận diện biển số..."; resDiv.className = "";
+            await new Promise(r => setTimeout(r, 600));
+            carInfo.classList.add('show'); 
+            await new Promise(r => setTimeout(r, 600));
+
+            if (xe) {
+                if (xe.du >= 25000) {
+                    barie.classList.add('up');
+                    resDiv.className = "open";
+                    resDiv.innerHTML = `✅ MỜI QUA: Mo barie - Chuc ban len duong an toan`;
+                    await new Promise(r => setTimeout(r, 800));
+                    carCont.style.left = "900px";
+                    updateHistory(bs, xe.ten, xe.loai, "Thành công");
+                } else {
+                    resDiv.className = "stop";
+                    resDiv.innerHTML = `❌ DỪNG LẠI: Khong du tien - Vui long nap them!`;
+                    await new Promise(r => setTimeout(r, 800));
+                    carCont.style.left = "-150px";
+                    updateHistory(bs, xe.ten, xe.loai, "Hết tiền");
+                }
             } else {
-                // THẤT BẠI
                 resDiv.className = "stop";
-                resDiv.innerHTML = xe ? `❌ HẾT TIỀN: ${xe.ten}` : "❌ XE CHƯA ĐĂNG KÝ ETC";
-                
-                await new Promise(r => setTimeout(r, 600));
-                car.style.left = "-150px"; // Xe lùi lại
-                updateHistory(bs, xe ? xe.ten : "Không xác định", "Bị chặn");
+                resDiv.innerHTML = `❌ DỪNG LẠI: Xe chua dang ky he thong!`;
+                await new Promise(r => setTimeout(r, 800));
+                carCont.style.left = "-150px";
+                updateHistory(bs, "N/A", "N/A", "Chưa đăng ký");
             }
 
-            // Reset barie và vị trí xe cho lượt sau
             setTimeout(() => {
+                carInfo.classList.remove('show');
                 barie.classList.remove('up');
-                if (car.style.left === "900px" || car.style.left === "-150px") {
-                    car.style.transition = "0s";
-                    car.style.left = "-100px";
-                    setTimeout(() => { car.style.transition = "1.2s ease-in-out"; }, 50);
+                if (carCont.style.left === "900px" || carCont.style.left === "-150px") {
+                    carCont.style.transition = "0s"; carCont.style.left = "-150px";
+                    setTimeout(() => { carCont.style.transition = "1.2s ease-in-out"; }, 50);
                 }
             }, 2500);
         }
@@ -124,26 +147,23 @@
             isAuto = !isAuto;
             const btn = document.getElementById('btnAuto');
             if (isAuto) {
-                btn.innerHTML = "Tự Động: ON";
-                btn.classList.add('on');
+                btn.innerHTML = "CHẾ ĐỘ TỰ ĐỘNG: ON"; btn.classList.add('on');
                 autoInterval = setInterval(() => {
                     const keys = Object.keys(dbXe);
                     document.getElementById('bienSo').value = keys[Math.floor(Math.random() * keys.length)];
                     runProcess();
-                }, 5500); // Khoảng cách giữa các lượt xe
+                }, 6000); 
             } else {
-                btn.innerHTML = "Tự Động: OFF";
-                btn.classList.remove('on');
+                btn.innerHTML = "CHẾ ĐỘ TỰ ĐỘNG: OFF"; btn.classList.remove('on');
                 clearInterval(autoInterval);
             }
         }
 
-        function updateHistory(bs, chuXe, status) {
+        function updateHistory(bs, chuXe, loaiXe, status) {
             const body = document.getElementById('historyBody');
             const row = body.insertRow(0);
-            row.style.background = status === "Thành công" ? "#f0fff4" : "#fff5f5";
-            row.innerHTML = `<td><b>${bs}</b></td><td>${chuXe}</td><td>${new Date().toLocaleTimeString()}</td><td>${status}</td>`;
-            if (body.rows.length > 6) body.deleteRow(6);
+            row.innerHTML = `<td><b>${bs}</b></td><td>${chuXe}</td><td>${loaiXe}</td><td>${new Date().toLocaleTimeString()}</td><td>${status}</td>`;
+            if (body.rows.length > 5) body.deleteRow(5);
         }
     </script>
 </body>
