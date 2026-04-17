@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Mô Phỏng Trạm Thu Phí Thông Minh - UTC</title>
+    <meta charset="utf-8">
+    <style>
+        :root {
+            --main-color: #00558d;
+            --success: #27ae60;
+            --error: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial;
+            background: #eceff1;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .road-container {
+            width: 100%;
+            max-width: 800px;
+            height: 150px;
+            background: #333;
+            position: relative;
+            overflow: hidden;
+            border-top: 4px dashed #fff;
+            border-bottom: 4px dashed #fff;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        .barie {
+            position: absolute;
+            right: 150px;
+            bottom: 0;
+            width: 15px;
+            height: 100px;
+            background: #f39c12;
+            transform-origin: bottom;
+            transition: 0.5s;
+            z-index: 10;
+            border: 2px solid #000;
+        }
+
+            .barie.up {
+                transform: rotate(90deg);
+            }
+
+        .car {
+            position: absolute;
+            left: -100px;
+            bottom: 20px;
+            font-size: 50px;
+            transition: 1s;
+            z-index: 5;
+        }
+
+        .control-panel {
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        input {
+            padding: 12px;
+            width: 60%;
+            font-size: 20px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .btn-group {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-manual {
+            background: var(--main-color);
+            color: white;
+        }
+
+        .btn-auto {
+            background: #8e44ad;
+            color: white;
+        }
+
+        #result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            min-height: 40px;
+        }
+
+        .open {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stop {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .history {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="color: var(--main-color);">HỆ THỐNG MÔ PHỎNG ITS - UTC</h1>
+
+    <div class="road-container">
+        <div id="barieArm" class="barie"></div>
+        <div id="carIcon" class="car">🚗</div>
+        <div style="position: absolute; right: 140px; top: 20px; color: white; border: 2px solid red; padding: 5px;">LÀN THU PHÍ ETC</div>
+    </div>
+
+    <div class="control-panel">
+        <input type="text" id="bienSo" placeholder="NHẬP BIỂN SỐ..." value="29A-11111">
+        <div class="btn-group">
+            <button class="btn-manual" onclick="runProcess()">QUÉT THỦ CÔNG</button>
+            <button id="btnAuto" class="btn-auto" onclick="toggleAuto()">CHẾ ĐỘ TỰ ĐỘNG: OFF</button>
+        </div>
+        <div id="result">Vui lòng nhập biển số hoặc bật Tự động</div>
+    </div>
+
+    <div class="history">
+        <h3>🕒 Nhật ký xe qua trạm (Real-time)</h3>
+        <table id="historyTable">
+            <thead>
+                <tr>
+                    <th>Biển Số</th>
+                    <th>Thời Gian</th>
+                    <th>Kết Quả</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <audio id="soundSuccess" src="https://www.soundjay.com/buttons/sounds/button-37a.mp3"></audio>
+    <audio id="soundError" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+
+    <script>
+        const danhSachXe = [
+            '29A-11111', '30F-88888', '51G-67890', '15A-55555', '43B-12345',
+            '34A-22222', '17B-33333', '99C-88888', '99A-99999', '36A-33333',
+            '14C-44444', '17A-77777', '98A-66666', '37A-99999', '19B-22222',
+            '20A-11223', '34B-44556', '18A-99887', '21A-00001', '30A-00000'
+        ];
+
+        let isAuto = false;
+        let autoInterval;
+
+        async function runProcess() {
+            const bs = document.getElementById('bienSo').value.trim();
+            const car = document.getElementById('carIcon');
+            const barie = document.getElementById('barieArm');
+            const resDiv = document.getElementById('result');
+
+            car.style.left = "450px";
+            resDiv.innerHTML = "🔍 Đang nhận diện biển số...";
+            resDiv.className = "";
+
+            await new Promise(r => setTimeout(r, 800));
+
+            try {
+                const response = await fetch('/api/Xe/' + bs);
+                const data = await response.json();
+
+                if (data.ketQua === "N") {
+                    document.getElementById('soundSuccess').play();
+                    barie.classList.add('up');
+                    resDiv.className = "open";
+                    resDiv.innerHTML = "✅ MỜI QUA: " + data.mess;
+
+                    await new Promise(r => setTimeout(r, 500));
+                    car.style.left = "900px";
+                } else {
+                    document.getElementById('soundError').play();
+                    resDiv.className = "stop";
+                    resDiv.innerHTML = "❌ DỪNG LẠI: " + data.mess;
+                    await new Promise(r => setTimeout(r, 500));
+                    car.style.left = "-100px";
+                }
+
+                updateHistory(bs, data.ketQua === "N" ? "Thành công" : "Thất bại");
+
+            } catch (err) {
+                resDiv.innerHTML = "Lỗi kết nối API!";
+            }
+
+            setTimeout(() => {
+                barie.classList.remove('up');
+                if (car.style.left === "900px") car.style.left = "-100px";
+            }, 2000);
+        }
+
+        function toggleAuto() {
+            isAuto = !isAuto;
+            const btn = document.getElementById('btnAuto');
+            if (isAuto) {
+                btn.innerHTML = "CHẾ ĐỘ TỰ ĐỘNG: ON";
+                btn.style.background = "#27ae60";
+                autoInterval = setInterval(() => {
+                    const ngauNhien = danhSachXe[Math.floor(Math.random() * danhSachXe.length)];
+                    document.getElementById('bienSo').value = ngauNhien;
+                    runProcess();
+                }, 5000);
+            } else {
+                btn.innerHTML = "CHẾ ĐỘ TỰ ĐỘNG: OFF";
+                btn.style.background = "#8e44ad";
+                clearInterval(autoInterval);
+            }
+        }
+
+        function updateHistory(bs, status) {
+            const table = document.getElementById('historyTable').getElementsByTagName('tbody')[0];
+            const row = table.insertRow(0);
+            row.innerHTML = `<td><b>${bs}</b></td><td>${new Date().toLocaleTimeString()}</td><td>${status}</td>`;
+            if (table.rows.length > 8) table.deleteRow(8);
+        }
+    </script>
+</body>
+</html>
